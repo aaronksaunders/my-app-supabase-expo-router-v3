@@ -142,7 +142,6 @@ export const uploadToSupabase = async (
 
     return { data, error: undefined };
   } catch (e) {
-    alert(`Error Uploading To Supabase ${(e as Error).message}`);
     return { error: e, data: undefined };
   }
 };
@@ -157,7 +156,6 @@ export const imagesFetcher = async () => {
   if (error) throw error;
   return { data, error: undefined };
   } catch (e) {
-    alert(`Error Fetching Images ${(e as Error).message}`);
     return { error: e, data: undefined };
   }
 };
