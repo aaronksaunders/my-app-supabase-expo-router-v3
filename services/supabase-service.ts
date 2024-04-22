@@ -57,7 +57,7 @@ export const login = async (
  * @param username
  * @returns
  */
-export const createAcount = async (
+export const createAccount = async (
   email: string,
   password: string,
   username: string
