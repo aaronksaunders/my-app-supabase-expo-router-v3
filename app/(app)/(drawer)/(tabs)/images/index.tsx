@@ -36,14 +36,14 @@ export default function TabImagesScreen() {
       {image && <Image source={image} style={{ width: 200, height: 200 }} />}
       <View style={{ flexDirection: "row", gap: 16 }}>
         <Button
-          title="Pick an image from camera roll"
+          title="Pick"
           onPress={pickImageAsync}
         />
-        <Button title="Clear Image" onPress={() => setImage(undefined)} />
+        <Button title="Clear" onPress={() => setImage(undefined)} />
         <Button
-          title="UPLOAD IMAGE"
+          title="Upload"
           onPress={async () => {
-            await uploadToSupabase(image?.uri!, image?.fileName!, image?.mimeType!);
+            await uploadToSupabase(image as ImagePicker.ImagePickerAsset);
             const newImages = await imagesFetcher();
             setImages(newImages);
             setImage(undefined);
@@ -52,7 +52,7 @@ export default function TabImagesScreen() {
       </View>
       <View style={{ display: "flex" }}>
         <Text style={{fontSize:18, fontWeight: 'bold', marginBottom:24}}>All Images</Text>
-        <View style={{width: 400, gap:8}}>
+        <View style={{width: 320, gap:8}}>
 
         {images.map((image) => (
           <Text key={image.id}>{image.name}</Text>

@@ -1,6 +1,7 @@
 import "react-native-url-polyfill/auto";
 import { createClient, User } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
 
 export const supabaseClient = createClient(
   process.env.EXPO_PUBLIC_SUPABASE_URL as string,
@@ -97,33 +98,40 @@ export const logout = async (): Promise<SignOutResponse> => {
   }
 };
 
-export const uploadToSupabase = async (uri: string,fileName: string, mimeType: string) => {
-
-
-
+export const uploadToSupabase = async (
+ { uri, mimeType, fileName } : ImagePicker.ImagePickerAsset
+) => {
   try {
-    // const name = uri.split("/").pop() as string;
 
-    const fetchResponse = await fetch(uri);
-    const blob = await fetchResponse.blob();
-    const fileFromBlob = new File([blob], fileName!, {
-      type: mimeType!,
-    });
+    let formData = new FormData();
+    let name;
 
-    console.log('[uploadToSupabase] ==>',fileName, mimeType);
+    if (uri.startsWith("file://")) {
+      name = uri.split("/").pop() as string;
 
-    const photo = {
-      uri: uri,
-      type: mimeType,
-      name: fileName,
-    };
+      const photo = {
+        uri: uri,
+        type: mimeType,
+        name: name,
+      };
 
-    var formData = new FormData();
-    formData.append("file", blob);
 
-    console.log(encodeURIComponent(fileName));
+      formData.append("file", photo as any);
+    } else {
 
-    let withoutSpaces = fileName.replace(/\s/g, "_");
+      name = fileName!;
+
+      // when on web
+      const fetchResponse = await fetch(uri);
+      const blob = await fetchResponse.blob();
+      const fileFromBlob = new File([blob], name, {
+        type: mimeType!,
+      });
+
+      formData.append("file", blob);
+    }
+
+    let withoutSpaces = name.replace(/\s/g, "_");
 
     const { data, error } = await supabaseClient.storage
       .from("images")
@@ -138,7 +146,6 @@ export const uploadToSupabase = async (uri: string,fileName: string, mimeType: s
     return { error: e, data: undefined };
   }
 };
-
 
 export const imagesFetcher = async () => {
   const { data, error } = await supabaseClient.storage.from("images").list();
