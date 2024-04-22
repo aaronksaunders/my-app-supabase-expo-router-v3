@@ -10,8 +10,8 @@ export default function TabImagesScreen() {
 
   useEffect(() => {
     (async () => {
-      const images = await imagesFetcher();
-      setImages(images);
+      const {data,error} = await imagesFetcher();
+      setImages(data!);
       console.log(images);
     })();
   }, []);

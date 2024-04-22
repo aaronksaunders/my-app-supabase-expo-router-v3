@@ -147,8 +147,17 @@ export const uploadToSupabase = async (
   }
 };
 
+/**
+ * Fetches images from the Supabase storage.
+ * @returns {Promise<any>} A promise that resolves to the fetched images data or an error object.
+ */
 export const imagesFetcher = async () => {
+  try {
   const { data, error } = await supabaseClient.storage.from("images").list();
   if (error) throw error;
-  return data;
+  return { data, error: undefined };
+  } catch (e) {
+    alert(`Error Fetching Images ${(e as Error).message}`);
+    return { error: e, data: undefined };
+  }
 };

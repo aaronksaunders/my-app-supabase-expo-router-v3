@@ -6,7 +6,9 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "generate:types": "touch ./types/supabase.ts; npx supabase gen types typescript --project-id 'fatdvjopubwsuunfcpeu'  --schema public > ./types/supabase.ts"
+
   },
   "dependencies": {
     "@expo/metro-runtime": "~3.1.3",
