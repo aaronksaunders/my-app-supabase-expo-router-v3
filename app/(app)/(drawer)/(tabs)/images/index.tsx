@@ -46,6 +46,7 @@ export default function TabImagesScreen() {
             await uploadToSupabase(image?.uri!, image?.fileName!, image?.mimeType!);
             const newImages = await imagesFetcher();
             setImages(newImages);
+            setImage(undefined);
           }}
         />
       </View>
