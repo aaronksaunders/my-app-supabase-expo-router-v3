@@ -96,3 +96,52 @@ export const logout = async (): Promise<SignOutResponse> => {
   } finally {
   }
 };
+
+export const uploadToSupabase = async (uri: string,fileName: string, mimeType: string) => {
+
+
+
+  try {
+    // const name = uri.split("/").pop() as string;
+
+    const fetchResponse = await fetch(uri);
+    const blob = await fetchResponse.blob();
+    const fileFromBlob = new File([blob], fileName!, {
+      type: mimeType!,
+    });
+
+    console.log('[uploadToSupabase] ==>',fileName, mimeType);
+
+    const photo = {
+      uri: uri,
+      type: mimeType,
+      name: fileName,
+    };
+
+    var formData = new FormData();
+    formData.append("file", blob);
+
+    console.log(encodeURIComponent(fileName));
+
+    let withoutSpaces = fileName.replace(/\s/g, "_");
+
+    const { data, error } = await supabaseClient.storage
+      .from("images")
+      .upload(encodeURIComponent(withoutSpaces), formData);
+    if (error) throw error;
+
+    console.log(data);
+
+    return { data, error: undefined };
+  } catch (e) {
+    alert(`Error Uploading To Supabase ${(e as Error).message}`);
+    return { error: e, data: undefined };
+  }
+};
+
+
+export const imagesFetcher = async () => {
+  const { data, error } = await supabaseClient.storage.from("images").list();
+  if (error) throw error;
+  return data;
+};
