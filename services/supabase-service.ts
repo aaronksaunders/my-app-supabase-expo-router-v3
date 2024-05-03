@@ -50,12 +50,14 @@ export const login = async (
   }
 };
 
+
 /**
- *
- * @param email
- * @param password
- * @param username
- * @returns
+ * Creates a new user account with the provided email, password, and username.
+ * 
+ * @param email - The email address of the user.
+ * @param password - The password for the user account.
+ * @param username - The username for the user account.
+ * @returns A Promise that resolves to a `SignInResponse` object containing the user data or an error.
  */
 export const createAccount = async (
   email: string,
@@ -98,11 +100,20 @@ export const logout = async (): Promise<SignOutResponse> => {
   }
 };
 
-export const uploadToSupabase = async (
- { uri, mimeType, fileName } : ImagePicker.ImagePickerAsset
-) => {
+/**
+ * Uploads an image to Supabase storage.
+ *
+ * @param uri - The URI of the image to upload.
+ * @param mimeType - The MIME type of the image.
+ * @param fileName - The name of the image file.
+ * @returns An object containing the uploaded data and any error that occurred during the upload.
+ */
+export const uploadToSupabase = async ({
+  uri,
+  mimeType,
+  fileName,
+}: ImagePicker.ImagePickerAsset) => {
   try {
-
     let formData = new FormData();
     let name;
 
@@ -115,10 +126,8 @@ export const uploadToSupabase = async (
         name: name,
       };
 
-
       formData.append("file", photo as any);
     } else {
-
       name = fileName!;
 
       // when on web
@@ -152,9 +161,9 @@ export const uploadToSupabase = async (
  */
 export const imagesFetcher = async () => {
   try {
-  const { data, error } = await supabaseClient.storage.from("images").list();
-  if (error) throw error;
-  return { data, error: undefined };
+    const { data, error } = await supabaseClient.storage.from("images").list();
+    if (error) throw error;
+    return { data, error: undefined };
   } catch (e) {
     return { error: e, data: undefined };
   }
