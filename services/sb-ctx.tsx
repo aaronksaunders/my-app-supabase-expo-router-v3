@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   supabaseClient,
   login,
-  createAcount,
+  createAccount,
   logout,
 } from "./supabase-service";
 import { User } from "@supabase/supabase-js";
@@ -73,7 +73,7 @@ export function SessionProvider(props: React.PropsWithChildren) {
         },
         signUp: async (email: string, password: string, name?: string) => {
           // Perform sign-up logic here
-          const response = await createAcount(email, password, name!);
+          const response = await createAccount(email, password, name!);
           setUser(response?.data!);
           setIsLoading(false);
           return response?.data!;
