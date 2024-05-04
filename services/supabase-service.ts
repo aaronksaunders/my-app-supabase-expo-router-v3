@@ -50,10 +50,9 @@ export const login = async (
   }
 };
 
-
 /**
  * Creates a new user account with the provided email, password, and username.
- * 
+ *
  * @param email - The email address of the user.
  * @param password - The password for the user account.
  * @param username - The username for the user account.
@@ -108,11 +107,10 @@ export const logout = async (): Promise<SignOutResponse> => {
  * @param fileName - The name of the image file.
  * @returns An object containing the uploaded data and any error that occurred during the upload.
  */
-export const uploadToSupabase = async ({
-  uri,
-  mimeType,
-  fileName,
-}: ImagePicker.ImagePickerAsset) => {
+export const uploadToSupabase = async (
+  isPublic = true,
+  { uri, mimeType, fileName }: ImagePicker.ImagePickerAsset
+) => {
   try {
     let formData = new FormData();
     let name;
@@ -142,14 +140,40 @@ export const uploadToSupabase = async ({
 
     let withoutSpaces = name.replace(/\s/g, "_");
 
+    // upload the image to the storage bucket
     const { data, error } = await supabaseClient.storage
       .from("images")
-      .upload(encodeURIComponent(withoutSpaces), formData);
+      .upload(encodeURIComponent(withoutSpaces), formData, {
+        upsert: true,
+      });
     if (error) throw error;
+    console.log("[image uploaded to storage] ==>", data);
 
-    console.log(data);
+    // get current user
+    const { data: getUserData, error: getUserError } =
+      await supabaseClient.auth.getUser();
+    if (getUserError) throw getUserError;
 
-    return { data, error: undefined };
+    // insert the image into the images table using the user's id
+    // and  indicate if the image is public or not
+    const { data: imageData, error: imageError } = await supabaseClient
+      .from("images")
+      .insert([
+        {
+          name: withoutSpaces,
+          url: data?.path,
+          is_public: isPublic,
+          owner_id: getUserData?.user?.id,
+        },
+      ]);
+    if (imageError) throw imageError;
+    console.log("[image inserted into table] ==>", imageData);
+
+    // return the image data on success
+    return {
+      data: imageData,
+      error: undefined,
+    };
   } catch (e) {
     return { error: e, data: undefined };
   }
@@ -161,10 +185,26 @@ export const uploadToSupabase = async ({
  */
 export const imagesFetcher = async () => {
   try {
-    const { data, error } = await supabaseClient.storage.from("images").list();
+    // const { data, error } = await supabaseClient.storage.from("images").list();
+
+    const { data, error } = await supabaseClient.from("images").select("*");
     if (error) throw error;
     return { data, error: undefined };
   } catch (e) {
+    console.log("imagesFetcher error", e);
     return { error: e, data: undefined };
   }
+};
+
+/**
+ * Retrieves the public URL of an image from the Supabase storage.
+ *
+ * @param url - The URL of the image.
+ * @returns The public URL of the image.
+ */
+export const getImage = async (url: string) => {
+  const { data } = await supabaseClient.storage
+    .from("images")
+    .getPublicUrl(url);
+  return data;
 };
