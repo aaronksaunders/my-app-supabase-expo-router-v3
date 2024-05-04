@@ -2,8 +2,9 @@ import "react-native-url-polyfill/auto";
 import { createClient, User } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
+import { Database, Tables, Enums } from "~/types/supabase";
 
-export const supabaseClient = createClient(
+export const supabaseClient = createClient<Database>(
   process.env.EXPO_PUBLIC_SUPABASE_URL as string,
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY as string,
   {
@@ -164,7 +165,7 @@ export const uploadToSupabase = async (
           url: data?.path,
           is_public: isPublic,
           owner_id: getUserData?.user?.id,
-        },
+        } as Tables<'images'>,
       ]);
     if (imageError) throw imageError;
     console.log("[image inserted into table] ==>", imageData);
@@ -189,7 +190,8 @@ export const imagesFetcher = async () => {
 
     const { data, error } = await supabaseClient.from("images").select("*");
     if (error) throw error;
-    return { data, error: undefined };
+
+    return { data: data as Tables<'images'>[], error: undefined };
   } catch (e) {
     console.log("imagesFetcher error", e);
     return { error: e, data: undefined };
