@@ -39,6 +39,7 @@ export type Database = {
           id: number
           is_public: boolean
           name: string | null
+          object_id: string | null
           owner_id: string
           url: string
         }
@@ -46,6 +47,7 @@ export type Database = {
           id?: number
           is_public?: boolean
           name?: string | null
+          object_id?: string | null
           owner_id: string
           url: string
         }
@@ -53,10 +55,54 @@ export type Database = {
           id?: number
           is_public?: boolean
           name?: string | null
+          object_id?: string | null
           owner_id?: string
           url?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "public_images_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+          username: string | null
+          website: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+          username?: string | null
+          website?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+          username?: string | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
