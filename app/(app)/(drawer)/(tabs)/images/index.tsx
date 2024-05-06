@@ -108,7 +108,7 @@ export default function TabImagesScreen() {
   };
 
   // calc width and height of image for the transformation
-  const width = Dimensions.get("window").width - 32;
+  const width = Math.round(Dimensions.get("window").width) - 32;
   console.log("[image dimesnsion] ==>", width);
 
   return (
