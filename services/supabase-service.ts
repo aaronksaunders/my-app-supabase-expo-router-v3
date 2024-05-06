@@ -27,6 +27,16 @@ export interface SignOutResponse {
   data: {} | undefined;
 }
 
+export interface StorageObject {
+  fullPath: string;
+  id: string;
+  path: string;
+}
+export interface ImageUploadResponse {
+  data: StorageObject | undefined;
+  error: Error | undefined;
+}
+
 /**
  *
  * @param email
@@ -46,7 +56,6 @@ export const login = async (
     if (error) throw error;
     return { data: data?.user, error: undefined };
   } catch (error) {
-    console.log("login error", error);
     return { error: error as Error, data: undefined };
   }
 };
@@ -145,10 +154,15 @@ export const uploadToSupabase = async (
     const { data, error } = await supabaseClient.storage
       .from("images")
       .upload(encodeURIComponent(withoutSpaces), formData, {
-        upsert: true,
+        upsert: false,
       });
     if (error) throw error;
-    console.log("[image uploaded to storage] ==>", data);
+    const uploadData = data as {
+      fullPath: string;
+      id: string;
+      path: string;
+    };
+    console.log("[image uploaded to storage] ==>", uploadData);
 
     // get current user
     const { data: getUserData, error: getUserError } =
@@ -165,7 +179,8 @@ export const uploadToSupabase = async (
           url: data?.path,
           is_public: isPublic,
           owner_id: getUserData?.user?.id,
-        } as Tables<'images'>,
+          object_id: uploadData.id,
+        } as Tables<"images">,
       ]);
     if (imageError) throw imageError;
     console.log("[image inserted into table] ==>", imageData);
@@ -191,7 +206,7 @@ export const imagesFetcher = async () => {
     const { data, error } = await supabaseClient.from("images").select("*");
     if (error) throw error;
 
-    return { data: data as Tables<'images'>[], error: undefined };
+    return { data: data as Tables<"images">[], error: undefined };
   } catch (e) {
     console.log("imagesFetcher error", e);
     return { error: e, data: undefined };
@@ -201,12 +216,22 @@ export const imagesFetcher = async () => {
 /**
  * Retrieves the public URL of an image from the Supabase storage.
  *
- * @param url - The URL of the image.
- * @returns The public URL of the image.
+ * @param url {string} - The URL of the image.
+ * @returns {signedUrl:string | null} The public URL of the image.
  */
-export const getImage = async (url: string) => {
-  const { data } = await supabaseClient.storage
+export const getImage = async (url: string, width?:number, height?:number) => {
+  const { data, error } = await supabaseClient.storage
     .from("images")
-    .getPublicUrl(url);
-  return data;
+    .createSignedUrl(url, 120, {
+      download: false,
+      transform: {
+        resize: 'contain',
+        width: width,
+        height: height,
+        quality: 100,
+      },
+    });
+  if (error) console.error("[getImage:createSignedUrl] ==> ", url, error);
+  if (error) throw error;
+  return data as { signedUrl: string } | null;
 };

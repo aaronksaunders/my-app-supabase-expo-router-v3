@@ -65,11 +65,19 @@ export function SessionProvider(props: React.PropsWithChildren) {
     <AuthContext.Provider
       value={{
         signIn: async (email: string, password: string) => {
-          // Perform sign-in logic here
-          const response = await login(email, password);
-          setUser(response?.data!);
-          setIsLoading(false);
-          return response?.data;
+          try {
+            // Perform sign-in logic here
+            const response = await login(email, password);
+            setUser(response?.data!);
+            setIsLoading(false);
+            if (response?.error) {
+              throw response?.error;
+            }
+            return response?.data;
+          } catch (error) {
+            console.log("session ctx error", error);
+            return undefined;
+          }
         },
         signUp: async (email: string, password: string, name?: string) => {
           // Perform sign-up logic here

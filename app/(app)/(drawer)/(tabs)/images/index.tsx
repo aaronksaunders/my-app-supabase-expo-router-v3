@@ -1,18 +1,39 @@
-import { Alert, Button, Text, View } from "react-native";
+import {
+  Alert,
+  Button,
+  Text,
+  View,
+  StyleSheet,
+  Dimensions,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import {
-  getImage,
   imagesFetcher,
+  StorageObject,
   uploadToSupabase,
 } from "~/services/supabase-service";
 import { ScrollView } from "react-native-gesture-handler";
+import { RenderImage } from "./RenderImage";
+import { Tables } from "~/types/supabase";
 
+/**
+ * Renders the TabImagesScreen component.
+ * This component allows the user to select and upload images.
+ * It displays the selected image, along with a list of all uploaded images.
+ */
 export default function TabImagesScreen() {
   const [image, setImage] = useState<ImagePicker.ImagePickerAsset>();
-  const [images, setImages] = useState<[] | undefined>(undefined);
+  const [images, setImages] = useState<Tables<"images">[] | undefined>(
+    undefined
+  );
 
+  /**
+   * Displays an alert with the specified title and message.
+   * @param {string} title - The title of the alert.
+   * @param {string} message - The message to be displayed in the alert.
+   */
   const showAlert = (title: string, message: string) => {
     Alert.alert(title, message, [
       {
@@ -26,9 +47,7 @@ export default function TabImagesScreen() {
     (async () => {
       const { data, error } = await imagesFetcher();
       data && console.log("[imagesFetcher] ==>", data);
-      setImages(data as any);
-      console.log(images);
-
+      setImages(data);
       if (error) {
         showAlert("Error Fetching Images", (error as Error).message);
       }
@@ -60,7 +79,7 @@ export default function TabImagesScreen() {
    */
   const handleUpload = async (): Promise<void> => {
     if (!image) {
-      alert("No image selected");
+      showAlert("Notice", "No image selected by the user.");
       return;
     }
 
@@ -80,7 +99,7 @@ export default function TabImagesScreen() {
     // if uploaded successfully, fetch images again
     const { data, error } = await imagesFetcher();
     if (!error) {
-      setImages(data!);
+      setImages(data);
       setImage(undefined);
     } else {
       console.error(error);
@@ -88,28 +107,44 @@ export default function TabImagesScreen() {
     }
   };
 
+  // calc width and height of image for the transformation
+  const width = Dimensions.get("window").width - 32;
+  console.log("[image dimesnsion] ==>", width);
+
   return (
     <ScrollView>
-      <View style={{ flex: 1, alignItems: "center", gap: 16, marginTop: 32 }}>
+      <View style={styles.container}>
+        {/* preview section  */}
         <Text>{!image ? "No image selected" : image.fileName}</Text>
-        {image && <Image source={image} style={{ width: 200, height: 200 }} />}
-        <View style={{ flexDirection: "row", gap: 16 }}>
+        {image && <Image source={image} style={styles.imagePreview} />}
+        <View style={styles.previewBtnContainer}>
           <Button title="Pick" onPress={pickImageAsync} />
           <Button title="Clear" onPress={() => setImage(undefined)} />
           <Button title="Upload" onPress={handleUpload} />
         </View>
-        <View style={{ display: "flex" }}>
-          <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 24 }}>
-            All Images
-          </Text>
-          <View style={{ width: 320, gap: 8 }}>
-            {images?.map((image: any) => {
+
+        {/* images section  */}
+        <View>
+          <Text style={styles.containerTitle}>All Images</Text>
+          <View>
+            {images?.map((image: Tables<"images">) => {
               return (
                 <View key={image.id}>
-                  <Text>ID: {image.id}</Text>
-                  <Text>NAME: {image.name}</Text>
-                  <Text>OWNER: {image.owner_id}</Text>
-                  <RenderImage image={image} />
+                  <Text style={styles.listItemText}>ID: {image.id}</Text>
+                  <Text style={styles.listItemText}>NAME: {image.name}</Text>
+                  <Text style={styles.listItemText}>
+                    OWNER: {image.owner_id}
+                  </Text>
+                  <Text style={styles.listItemText}>
+                    PUBLIC: {image.is_public.toString()}
+                  </Text>
+                  <View style={styles.listItemImage}>
+                    <RenderImage
+                      image={image}
+                      width={width * 2}
+                      height={200 * 2}
+                    />
+                  </View>
                 </View>
               );
             })}
@@ -120,22 +155,11 @@ export default function TabImagesScreen() {
   );
 }
 
-const RenderImage = ({ image }: { image: any }) => {
-  const [img, setImg] = useState<string>();
-
-  useEffect(() => {
-    (async () => {
-      const img = await getImage(image.name);
-      setImg(img.publicUrl as string);
-    })();
-  }, []);
-
-  return (
-    <View>
-      <Text>{img}</Text>
-      {img && (
-        <Image source={{ uri: img }} style={{ width: 100, height: 100 }} />
-      )}
-    </View>
-  );
-};
+const styles = StyleSheet.create({
+  container: { flex: 1, alignItems: "center", gap: 16, marginTop: 32 },
+  containerTitle: { fontSize: 16, fontWeight: "bold" },
+  imagePreview: { width: 200, height: 200 },
+  previewBtnContainer: { display: "flex", flexDirection: "row", gap: 16 },
+  listItemImage: { flex: 1, width: "100%", height: 300 },
+  listItemText: { fontSize: 12 },
+});
